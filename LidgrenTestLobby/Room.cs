@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using Lidgren.Network;
 using LudimoLibrary.Core.World;
-using Microsoft.Win32;
 
 namespace LidgrenTestLobby
 {
@@ -33,7 +32,8 @@ namespace LidgrenTestLobby
             _roomLoopTask = new Task(RunRoomLoop);
             _roomLoopTask.Start();
 
-            WorldData = FileManager.Load<WorldData>("saves/serverWorld.world");
+            WorldData = FileManager.Load<WorldData>("saves/test2.world");
+            Console.WriteLine(WorldData[0, 0][0].Blocks[0, 0].Type);
         }
 
         public void DestroyRoom()

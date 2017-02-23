@@ -34,7 +34,6 @@ namespace LidgrenTestLobby
             //Try to Deserialize the file into an object of type <T>.
             try
             {
-                
                 T obj = (T)binaryFormatter.Deserialize(file);
                 file.Close();
                 return obj;
