@@ -38,7 +38,8 @@
     <Reference Include="Lidgren.Network">
       <HintPath>Libraries\Lidgren\Lidgren.Network.dll</HintPath>
     </Reference>
-    <Reference Include="LudimoLibrary">
+    <Reference Include="LudimoLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\ludimo\Assets\Lib\LudimoLibrary.dll</HintPath>
     </Reference>
     <Reference Include="System" />

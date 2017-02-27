@@ -32,8 +32,7 @@ namespace LidgrenTestLobby
             _roomLoopTask = new Task(RunRoomLoop);
             _roomLoopTask.Start();
 
-            WorldData = FileManager.Load<WorldData>("saves/test2.world");
-            Console.WriteLine(WorldData[0, 0][0].Blocks[0, 0].Type);
+            WorldData = FileManager.Load<WorldData>("saves/test5.world");
         }
 
         public void DestroyRoom()
@@ -45,6 +44,7 @@ namespace LidgrenTestLobby
         private async void RunRoomLoop()
         {
             int sendRate = 1000 / 66; // 1 sec = 1000ms as Sleep uses ms.
+
             for (_roomAlive = true; _roomAlive; await Task.Delay(sendRate))
             {
                 
@@ -99,6 +99,7 @@ namespace LidgrenTestLobby
         public override string ToString()
         {
             return Name + " ID: " + Id + " PlayerCount: " + Players.Count;
+            ;
         }
     }
 }
