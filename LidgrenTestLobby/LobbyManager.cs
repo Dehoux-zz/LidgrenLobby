@@ -160,7 +160,19 @@ namespace LidgrenTestLobby
         {
             Console.WriteLine("Client with client ID " + client.Id + " left the server, byebye.");
 
+            //Remove client from lobby/server
             _clients.Remove(client);
+
+            //Remove client from room he was maybe in (maybe not the cleanest way)
+            foreach (Room room in _rooms)
+            {
+                if (room.Clients.Contains(client))
+                {
+                    room.ClientLeavesRoom(client);
+                }
+            }
+
+
         }
         
         #endregion

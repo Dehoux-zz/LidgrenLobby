@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using Lidgren.Network;
 using LudimoLibrary.Core.World;
+using LudimoLibrary.Util.IO;
 
 namespace LidgrenTestLobby
 {
     class Room
     {
         public int Id;
-        public List<Player> Players;
+        public List<Client> Clients;
         public string Name = "TestRoom";
         public List<string> RoomConsole;
         public TextBox LogOutputBox;
@@ -26,7 +27,7 @@ namespace LidgrenTestLobby
 
         public Room()
         {
-            Players = new List<Player>();
+            Clients = new List<Client>();
             RoomConsole = new List<string>();
 
             _roomLoopTask = new Task(RunRoomLoop);
@@ -51,37 +52,53 @@ namespace LidgrenTestLobby
             }
         }
 
-        //MOET NOG IN EIGEN CLASS, MISSCHIEN FILE MANAGER OFWEL IN DE LIBRARY
-        public byte[] ObjectToByteArray(WorldData worldData)
-        {
-            if (worldData == null) return null;
-            BinaryFormatter bf = new BinaryFormatter();
-            using (MemoryStream ms = new MemoryStream())
-            {
-                bf.Serialize(ms, worldData);
-                return ms.ToArray();
-            }
-        }
-
         public void ClientEntersRoom(Client client)
         {
-            Players.Add(new Player(client));
+            //Add client to this room and let the client know he has joined this specific room
+            Clients.Add(client);
+            client.JoinRoom(this);
 
+            //Send back room Id for verification and the WorldData for room settings and static world information
             NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
             outgoingMessage.Write((byte)PacketTypes.EnterRoom);
             outgoingMessage.Write(Id);
-
-            byte[] worldDataArray = ObjectToByteArray(WorldData);
+            byte[] worldDataArray = FileManager.ObjectToByteArray(WorldData);
             outgoingMessage.Write(worldDataArray.Length);
             outgoingMessage.Write(worldDataArray);
             LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 1);
+
+            foreach (Client roomClient in Clients.Where(c => c != client))
+            {
+                outgoingMessage = LobbyManager.Server.CreateMessage();
+                outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+                outgoingMessage.Write(roomClient.Id);
+                outgoingMessage.Write(roomClient.Player.Name);
+                outgoingMessage.Write(roomClient.Player.Position);
+                LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+            }
             
+            //Send back nice room welcome message
             outgoingMessage = LobbyManager.Server.CreateMessage();
             outgoingMessage.Write((byte)PacketTypes.Message);
-            outgoingMessage.Write("You (Client: " + Id + ") now got into a room, welcome to room number " + Id + ".");
+            outgoingMessage.Write("You (Client: " + client.Id + ") now got into a room, welcome to room number " + Id + ".");
             LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 0);
 
-            ConsoleWrite("New player has joined the room: Client " + client.Id);
+            ConsoleWrite("New player has joined the room: Client " + client.Id + ".");
+        }
+
+        public void ClientLeavesRoom(Client client)
+        {
+            //Remove client from this room and let the client know he has left his room
+            Clients.Remove(client);
+            client.LeaveRoom();
+
+            //Send back nice room goodbye message
+            NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
+            outgoingMessage.Write((byte)PacketTypes.Message);
+            outgoingMessage.Write("You (Client: " + client.Id + ") just left the room nr " + Id + ". Byebye!");
+            LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 0);
+
+            ConsoleWrite("A player has left the room: Client " + client.Id + ".");
         }
 
         public void ConsoleWrite(string message)
@@ -98,8 +115,8 @@ namespace LidgrenTestLobby
 
         public override string ToString()
         {
-            return Name + " ID: " + Id + " PlayerCount: " + Players.Count;
-            ;
+            return Name + " ID: " + Id + " PlayerCount: " + Clients.Count;
+            
         }
     }
 }

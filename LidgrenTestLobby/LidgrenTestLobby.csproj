@@ -65,7 +65,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="FileManager.cs" />
     <Compile Include="MessageHandler.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Room.cs" />

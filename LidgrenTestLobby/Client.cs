@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using UnityEngine;
 
 namespace LidgrenTestLobby
 {
@@ -15,6 +16,9 @@ namespace LidgrenTestLobby
         public NetConnection Connection { get; }
         public int LastBeat;
         public double KeepAlive = 0, LastKeepAlive = 0;
+        public Room JoinedRoom;
+
+        public Player Player;
 
         public Client(int id, NetConnection connection, int curBeat)
         {
@@ -24,7 +28,24 @@ namespace LidgrenTestLobby
 
             AssignIdToClient();
         }
-        
+
+        //public Player GetPlayer()
+        //{
+        //    return Player ?? (Player = new Player(Id));
+        //}
+
+        public void JoinRoom(Room joinedRoom)
+        {
+            JoinedRoom = joinedRoom;
+            Player = new Player(Id);
+            SentPlayerToOthers();
+        }
+
+        public void LeaveRoom()
+        {
+            JoinedRoom = null;
+        }
+
         /// <summary>
         /// Let the Client know he has been accepted by the server and has been given an ID.
         /// </summary>
@@ -55,7 +76,59 @@ namespace LidgrenTestLobby
             }
 
             Console.WriteLine("Client id " + Id + "; status changed to " + status + " (" + reason + ") " + ".");
+        }
 
+
+        /// <summary>
+        /// Send startplayer information to other players
+        /// </summary>
+        public void SentPlayerToOthers()
+        {
+            Console.WriteLine("Send Player to all Players");
+
+            foreach (Client client in JoinedRoom.Clients.Where(c => c != this))
+            {
+                NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
+                outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+                outgoingMessage.Write(Id);
+                outgoingMessage.Write(Player.Name);
+                outgoingMessage.Write(Player.Position);
+                LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+            }
+        }
+
+        public void HandlePlayerMovement(NetIncomingMessage incomingMessage)
+        {
+            Vector2 playerPosition = incomingMessage.ReadVector2();
+            bool playerGrounded = incomingMessage.ReadBoolean();
+            Player.SetMovement(playerPosition, playerGrounded);
+
+            //Console.WriteLine("Name: " + Player.Name + " Position: " + playerPosition + " Velocity: " + playerVelocity + " Grounded: " + playerGrounded);
+            foreach (Client client in JoinedRoom.Clients.Where(c => c != this))
+            {
+                //Console.WriteLine("Sending player movement info");
+
+                NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
+                outgoingMessage.Write((byte)PacketTypes.PlayerMovement);
+                outgoingMessage.Write((Int16)Id);
+                outgoingMessage.Write(Player.Position);
+                outgoingMessage.Write(Player.Grounded);
+                //outgoingMessage.Write(player.Connection.AverageRoundtripTime / 2f);
+                LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.UnreliableSequenced, 10);
+            }
+        }
+
+        public void HandlePlayerJump()
+        {
+            foreach (Client client in JoinedRoom.Clients)
+            {
+                NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
+                outgoingMessage = LobbyManager.Server.CreateMessage();
+                outgoingMessage.Write((byte)PacketTypes.PlayerJump);
+                outgoingMessage.Write((Int16)Id);
+                LobbyManager.Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableUnordered, 11);
+
+            }
         }
     }
 }

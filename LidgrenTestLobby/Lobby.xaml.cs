@@ -114,7 +114,7 @@ namespace LidgrenTestLobby
                 Room room = (Room)RoomList.SelectedItem;
                 RoomLog.Text = string.Join("\r\n", room.RoomConsole.ToArray());
                 room.LogOutputBox = RoomLog;
-                playerCount.Text = "PlayerCount: " + room.Players.Count;
+                playerCount.Text = "PlayerCount: " + room.Clients.Count;
                 ClearRoomLogButton.IsEnabled = true;
             }
         }

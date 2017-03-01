@@ -70,8 +70,9 @@ namespace LidgrenTestLobby
                             //Beat return, ??
                             case PacketTypes.Beat:
                                 {
-
-
+                                    if (incomingMessage.LengthBytes < 2) break; //needed?
+                                    client.LastBeat = incomingMessage.ReadInt16();
+                                    client.Player.Position = incomingMessage.ReadVector2();
                                 }
                                 break;
 
@@ -85,14 +86,15 @@ namespace LidgrenTestLobby
                             //Handle player movement en send to all but the incommingmessage player
                             case PacketTypes.PlayerMovement:
                                 {
-                                    //Not yet implemented, maybe different kind of server system.
+                                    //Console.WriteLine("Got player movement");
+                                    client.HandlePlayerMovement(incomingMessage);
                                 }
                                 break;
 
                             //Handle player jump en send to all but the incommingmessage player
                             case PacketTypes.PlayerJump:
                                 {
-                                    //Not yet implemented, maybe different kind of server system.
+                                    client.HandlePlayerJump();
                                 }
                                 break;
                             case PacketTypes.EnterRoom:
